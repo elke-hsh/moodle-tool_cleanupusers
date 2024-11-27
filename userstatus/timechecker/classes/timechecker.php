@@ -23,6 +23,7 @@
  */
 namespace userstatus_timechecker;
 
+use core_reportbuilder\local\filters\text;
 use tool_cleanupusers\archiveduser;
 use tool_cleanupusers\userstatusinterface;
 
@@ -38,6 +39,8 @@ class timechecker implements userstatusinterface {
     private $timesuspend;
     /** @var int seconds until a user should be deleted */
     private $timedelete;
+    /** @var string auth types to consider */
+    private $authtypes;
 
     /**
      * This constructor sets timesuspend and timedelete from days to seconds.
@@ -47,6 +50,7 @@ class timechecker implements userstatusinterface {
         // Calculates days to seconds.
         $this->timesuspend = $config->suspendtime * 86400;
         $this->timedelete = $config->deletetime * 86400;
+        $this->authtypes = $config->enabledauth;
     }
 
     /**
@@ -59,17 +63,18 @@ class timechecker implements userstatusinterface {
      */
     public function get_to_suspend() {
         global $DB;
+        [$inenabledauthtypes, $params] = $DB->get_in_or_equal($this->authtypes, SQL_PARAMS_NAMED);
+        $params['timelimit'] = time() - $this->timesuspend;
 
         $users = $DB->get_records_sql(
             "SELECT id, suspended, lastaccess, username, deleted
                 FROM {user}
-                WHERE suspended = 0
+                WHERE auth {$inenabledauthtypes}
+                    AND suspended = 0
                     AND deleted = 0
                     AND lastaccess != 0
                     AND lastaccess < :timelimit",
-            [
-                'timelimit'  => time() - $this->timesuspend,
-            ]
+            $params
         );
 
         $tosuspend = [];
@@ -97,11 +102,14 @@ class timechecker implements userstatusinterface {
      */
     public function get_never_logged_in() {
         global $DB;
+        [$inenabledauthtypes, $params] = $DB->get_in_or_equal($this->authtypes, SQL_PARAMS_NAMED);
+
         $users = $DB->get_records_sql(
             "SELECT u.id, u.suspended, u.lastaccess, u.username, u.deleted
                 FROM {user} u
                 LEFT JOIN {tool_cleanupusers} tc ON u.id = tc.id
-                WHERE u.lastaccess = 0
+                WHERE u.auth {$inenabledauthtypes} 
+                    AND u.lastaccess = 0
                     AND u.deleted = 0
                     AND tc.id IS NULL"
         );
@@ -130,18 +138,19 @@ class timechecker implements userstatusinterface {
      */
     public function get_to_delete() {
         global $DB;
+        [$inenabledauthtypes, $params] = $DB->get_in_or_equal($this->authtypes, SQL_PARAMS_NAMED);
+        $params['timelimit'] = time() - $this->timedelete;
 
         $users = $DB->get_records_sql(
             "SELECT tca.id, tca.suspended, tca.lastaccess, tca.username, tca.deleted
                 FROM {user} u
                 JOIN {tool_cleanupusers} tc ON u.id = tc.id
                 JOIN {tool_cleanupusers_archive} tca ON u.id = tca.id
-                WHERE u.suspended = 1
+                WHERE u.auth {$inenabledauthtypes}
+                    AND u.suspended = 1
                     AND u.deleted = 0
                     AND tc.timestamp < :timelimit",
-            [
-                'timelimit'  => time() - $this->timedelete,
-            ]
+            $params
         );
 
         $todelete = [];
@@ -172,20 +181,21 @@ class timechecker implements userstatusinterface {
      */
     public function get_to_reactivate() {
         global $DB;
+        [$inenabledauthtypes, $params] = $DB->get_in_or_equal($this->authtypes, SQL_PARAMS_NAMED);
+        $params['timelimit'] = time() - $this->timesuspend;
 
         $users = $DB->get_records_sql(
             "SELECT tca.id, tca.suspended, tca.lastaccess, tca.username, tca.deleted
                 FROM {user} u
                 JOIN {tool_cleanupusers} tc ON u.id = tc.id
                 JOIN {tool_cleanupusers_archive} tca ON u.id = tca.id
-                WHERE u.suspended = 1
+                WHERE u.auth {$inenabledauthtypes}
+                    AND u.suspended = 1
                     AND u.deleted = 0
                     AND tca.lastaccess >= :timelimit
                     AND tca.username NOT IN
                         (SELECT username FROM {user} WHERE username IS NOT NULL)",
-            [
-                'timelimit'  => time() - $this->timesuspend,
-            ]
+            $params
         );
 
         $toactivate = [];

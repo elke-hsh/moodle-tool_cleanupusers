@@ -46,4 +46,29 @@ if ($hassiteconfig) {
         365,
         PARAM_INT
     ));
+    // get installed auth types for choices
+    $is_disabled = '('.get_string('disabled', 'userstatus_timechecker').')';
+    $plugins = core_plugin_manager::instance()->get_plugins_of_type('auth');
+    $defaults = [];
+    $enabled = [];
+    $disabled = [];
+    // sort the plugins in the same order as in the admin settings
+    foreach ($plugins as $plugin) {
+        if ($plugin->name == 'manual' || $plugin->name == 'nologin') {
+            $defaults[$plugin->name] = $plugin->displayname;
+        } elseif ($plugin->is_enabled()) {
+            $enabled[$plugin->name] = $plugin->displayname;
+        } else {
+            $disabled[$plugin->name] = $plugin->displayname.' '.$is_disabled;
+        }
+        $auths = [];
+        $auths = array_merge($defaults, $enabled, $disabled);
+    }
+    $settings->add(new admin_setting_configmulticheckbox(
+        'userstatus_timechecker_enhanced/enabledauth',
+        get_string('enabledauth', 'userstatus_timechecker'),
+        get_string('timechecker_enableddauth', 'userstatus_timechecker'),
+        [],
+        $auths
+    ));
 }

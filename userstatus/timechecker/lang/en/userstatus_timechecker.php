@@ -30,3 +30,6 @@ $string['settingsinformation'] = 'Subplugin information';
 $string['suspendtime'] = 'Time until suspension';
 $string['timechecker_time_to_archive'] = 'Number of days without log in until a user is suspended.';
 $string['timechecker_time_to_delete'] = 'Number of days a user is suspended until s/he is deleted.';
+$string['disabled'] = 'disabled';
+$string['enabledauth'] = 'Authentication types';
+$string['timechecker_enableddauth'] = 'Authentication types to be considered.';
