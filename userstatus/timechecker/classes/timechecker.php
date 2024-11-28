@@ -50,7 +50,7 @@ class timechecker implements userstatusinterface {
         // Calculates days to seconds.
         $this->timesuspend = $config->suspendtime * 86400;
         $this->timedelete = $config->deletetime * 86400;
-        $this->authtypes = $config->enabledauth;
+        $this->authtypes = explode(",", $config->enabledauth);
     }
 
     /**
