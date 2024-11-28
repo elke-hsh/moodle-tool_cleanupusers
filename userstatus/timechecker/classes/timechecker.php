@@ -111,7 +111,8 @@ class timechecker implements userstatusinterface {
                 WHERE u.auth {$inenabledauthtypes} 
                     AND u.lastaccess = 0
                     AND u.deleted = 0
-                    AND tc.id IS NULL"
+                    AND tc.id IS NULL",
+            $params
         );
         $neverloggedin = [];
         foreach ($users as $key => $user) {

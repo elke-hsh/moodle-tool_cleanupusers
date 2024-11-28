@@ -65,7 +65,7 @@ if ($hassiteconfig) {
         $auths = array_merge($defaults, $enabled, $disabled);
     }
     $settings->add(new admin_setting_configmulticheckbox(
-        'userstatus_timechecker_enhanced/enabledauth',
+        'userstatus_timechecker/enabledauth',
         get_string('enabledauth', 'userstatus_timechecker'),
         get_string('timechecker_enableddauth', 'userstatus_timechecker'),
         [],
