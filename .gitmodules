@@ -1,0 +1,3 @@
+[submodule "userstatus/ldapchecker"]
+	path = userstatus/ldapchecker
+	url = https://github.com/elke-hsh/moodle-cleanupusers_ldapchecker.git
